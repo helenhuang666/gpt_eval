@@ -6,46 +6,50 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-  <!-- PWA 必需 -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
   <title>Pronunciation</title>
 
   <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
     body {
+      margin: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fff;
     }
-
     .card {
+      text-align: center;
       padding: 24px;
     }
-
     .word {
-      font-size: 32px;
-      margin-bottom: 16px;
+      font-size: 36px;
+      margin-bottom: 20px;
     }
-
+    button {
+      font-size: 18px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      background: #007aff;
+      color: #fff;
+    }
     .status {
+      margin-top: 12px;
       color: #666;
-      margin-bottom: 12px;
+      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
   <div class="card">
-    <div class="word" id="word">Loading…</div>
-    <div class="status" id="status">Ready</div>
+    <div class="word" id="word">word</div>
+    <button id="recordBtn">🎤 开始录音</button>
+    <div class="status" id="status">未开始</div>
   </div>
 
   <script>
@@ -53,8 +57,31 @@
     const word = params.get("word") || "";
     document.getElementById("word").innerText = word;
 
-    document.getElementById("status").innerText =
-      "（这里以后接你的发音评测逻辑）";
+    let mediaRecorder;
+    let chunks = [];
+
+    document.getElementById("recordBtn").onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        mediaRecorder = new MediaRecorder(stream);
+        chunks = [];
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          document.getElementById("status").innerText = "录音完成（本地）";
+        };
+
+        mediaRecorder.start();
+        document.getElementById("status").innerText = "录音中…";
+
+        setTimeout(() => {
+          mediaRecorder.stop();
+        }, 3000); // 录 3 秒
+      } catch (e) {
+        document.getElementById("status").innerText = "麦克风权限被拒绝";
+      }
+    };
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
